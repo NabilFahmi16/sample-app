@@ -1,22 +1,34 @@
 #!/bin/bash
+# --------------------------------------------------------------
+# Build the sample Flask app inside a Docker image and run it
+# --------------------------------------------------------------
 
-mkdir tempdir
-mkdir tempdir/templates
-mkdir tempdir/static
+# 1. Create a clean temp directory
+rm -rf tempdir
+mkdir -p tempdir/templates tempdir/static
 
-cp sample_app.py tempdir/.
-cp -r templates/* tempdir/templates/.
-cp -r static/* tempdir/static/.
+# 2. Copy source files
+cp sample_app.py            tempdir/.
+cp -r templates/*          tempdir/templates/. 2>/dev/null || true
+cp -r static/*             tempdir/static/.    2>/dev/null || true
 
-echo "FROM python" >> tempdir/Dockerfile
-echo "RUN pip install flask" >> tempdir/Dockerfile
-echo "COPY  ./static /home/myapp/static/" >> tempdir/Dockerfile
-echo "COPY  ./templates /home/myapp/templates/" >> tempdir/Dockerfile
-echo "COPY  sample_app.py /home/myapp/" >> tempdir/Dockerfile
-echo "EXPOSE 8080" >> tempdir/Dockerfile
-echo "CMD python /home/myapp/sample_app.py" >> tempdir/Dockerfile
+# 3. Write Dockerfile
+cat > tempdir/Dockerfile <<'EOF'
+FROM python:3.11-slim
+RUN pip install --no-cache-dir flask
+WORKDIR /home/myapp
+COPY ./static    /home/myapp/static/
+COPY ./templates /home/myapp/templates/
+COPY sample_app.py /home/myapp/
+EXPOSE 5050
+CMD ["python", "/home/myapp/sample_app.py"]
+EOF
 
+# 4. Build & run
 cd tempdir
 docker build -t sampleapp .
-docker run -t -d -p 8080:8080 --name samplerunning sampleapp
-docker ps -a 
+# --network host makes the container share the host (Jenkins) network
+docker run -t -d --network host --name samplerunning sampleapp
+
+# 5. Show what is running
+docker ps -a
