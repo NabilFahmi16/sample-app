@@ -1,13 +1,12 @@
-# Add to this file for the sample app lab
-from flask import Flask
-from flask import request
-from flask import render_template
+#!/usr/bin/env python3
+from flask import Flask, render_template
 
-sample = Flask(__name__)
+app = Flask(__name__)
 
-@sample.route("/")
+@app.route("/")
 def main():
     return render_template("index.html")
 
 if __name__ == "__main__":
-    sample.run(host="0.0.0.0", port=8080)
+    # Listen on ALL interfaces, port 5050
+    app.run(host="0.0.0.0", port=5050)
